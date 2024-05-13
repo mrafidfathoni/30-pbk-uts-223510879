@@ -2,9 +2,9 @@
 	--primary: #19a1ef;
 	--business: #d22e00;
 	--personal: var(--primary);
-	--light: #575757;
-	--grey: #c4d31f;
-	--dark: #1616db;
+	--light: #f74646;
+	--grey: #1fcad3;
+	--dark: #1a1af1;
 	--danger: #fb2925;
 
 	--shadow: 0 1px 3px rgb(0, 0, 0);

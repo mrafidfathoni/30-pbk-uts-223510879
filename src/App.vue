@@ -1,126 +1,189 @@
-<script setup>
-import { ref, onMounted, computed, watch } from 'vue'
+<template>
+  <div class="container">
+    <header>
+      <nav>
+        <ul>
+          <li @click="selectedMenu = 'Post'" :class="{ active: selectedMenu === 'Post' }">Post</li>
+          <li @click="selectedMenu = 'Todos'" :class="{ active: selectedMenu === 'Todos' }">Todos</li>
+        </ul>
+      </nav>
+    </header>
+    <div class="content">
+      <div v-if="selectedMenu === 'Post'" class="post-section">
+        <div class="column">
+          <h3>User Details:</h3>
+          <p v-if="selectedUserName"><strong>Name:</strong> {{ selectedUserName }}</p>
+          <p v-if="selectedUserEmail"><strong>Email:</strong> {{ selectedUserEmail }}</p>
+          <p v-if="selectedUserPhone"><strong>Phone:</strong> {{ selectedUserPhone }}</p>
+        </div>
+        <div class="column">
+          <select v-model="selectedUser" @change="fetchPosts">
+            <option v-for="user in users" :key="user.id" :value="user.id">{{ user.name }}</option>
+          </select>
+        </div>
+        <div class="column">
+          <div v-if="loading" class="loading">Loading...</div>
+          <div v-else-if="posts.length > 0">
+            <h2>Postingan User: {{ selectedUserName }}</h2>
+            <ul>
+              <li v-for="post in posts" :key="post.id">
+                <h3>{{ post.title }}</h3>
+                <p>{{ post.body }}</p>
+              </li>
+            </ul>
+          </div>
+          <div v-else>
+            <p>Tidak ada postingan untuk pengguna ini.</p>
+          </div>
+        </div>
+      </div>
+      <div v-else-if="selectedMenu === 'Todos'" class="todos-section">
+        <Todos :todos="todos" />
+      </div>
+    </div>
+  </div>
+</template>
 
-const todos = ref([])
-const name = ref('')
+<script>
+import Todos from './Todos.vue'; // Sesuaikan dengan path file komponen Todos Anda
 
-const input_content = ref('')
-const input_category = ref(null)
-
-const todos_asc = computed(() => todos.value.sort((a,b) =>{
-	return a.createdAt - b.createdAt
-}))
-
-watch(name, (newVal) => {
-	localStorage.setItem('name', newVal)
-})
-
-watch(todos, (newVal) => {
-	localStorage.setItem('todos', JSON.stringify(newVal))
-}, {
-	deep: true
-})
-
-const addTodo = () => {
-	if (input_content.value.trim() === '' || input_category.value === null) {
-		return
-	}
-
-	todos.value.push({
-		content: input_content.value,
-		category: input_category.value,
-		done: false,
-		editable: false,
-		createdAt: new Date().getTime()
-	})
-}
-
-const removeTodo = (todo) => {
-	todos.value = todos.value.filter((t) => t !== todo)
-}
-
-onMounted(() => {
-	name.value = localStorage.getItem('name') || ''
-	todos.value = JSON.parse(localStorage.getItem('todos')) || []
-})
+export default {
+  components: {
+    Todos
+  },
+  data() {
+    return {
+      selectedMenu: 'Post', // Default menu selection
+      users: [],
+      selectedUser: null,
+      selectedUserName: '',
+      selectedUserEmail: '',
+      selectedUserPhone: '',
+      posts: [],
+      todos: [],
+      loading: false
+    };
+  },
+  methods: {
+    fetchUsers() {
+      fetch('https://jsonplaceholder.typicode.com/users')
+        .then(response => response.json())
+        .then(data => {
+          this.users = data;
+        })
+        .catch(error => {
+          console.error('Error fetching users:', error);
+        });
+    },
+    fetchPosts() {
+      if (this.selectedUser) {
+        this.loading = true;
+        fetch(`https://jsonplaceholder.typicode.com/posts?userId=${this.selectedUser}`)
+          .then(response => response.json())
+          .then(data => {
+            this.posts = data;
+            const selectedUser = this.users.find(user => user.id === parseInt(this.selectedUser));
+            if (selectedUser) {
+              this.selectedUserName = selectedUser.name;
+              this.selectedUserEmail = selectedUser.email;
+              this.selectedUserPhone = selectedUser.phone;
+            }
+            this.loading = false;
+          })
+          .catch(error => {
+            console.error('Error fetching posts:', error);
+            this.loading = false;
+          });
+      }
+    }
+  },
+  watch: {
+    selectedUser() {
+      this.fetchPosts();
+    }
+  },
+  created() {
+    this.fetchUsers();
+  }
+};
 </script>
 
-<template>
-	<main class="app">
-		
-		<section class="greeting">
-			<h2 class="title">
-				 <input type="text" id="name" placeholder="TaskMaster" v-model="name">
-			</h2>
-		</section>
 
-		<section class="create-todo">
-			<h3>MEMBUAT LIST</h3>
+<style>
 
-			<form id="new-todo-form" @submit.prevent="addTodo">
-				<h4>Apa Yang Ingin Kamu List?</h4>
-				<input 
-					type="text" 
-					name="content" 
-					id="content" 
-					placeholder="Tuliskan"
-					v-model="input_content" />
-				
-				<h4>Pilih Kategori</h4>
-				<div class="options">
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: linear-gradient(to right, #4CAF50, #2E8B57); /* Gradient background */
+}
 
-					<label>
-						<input 
-							type="radio" 
-							name="category" 
-							id="category1" 
-							value="business"
-							v-model="input_category" />
-						<span class="bubble business"></span>
-						<div>Pribadi</div>
-					</label>
+header {
+  background-color: transparent; /* Hapus background color header */
+  padding: 20px 0;
+  box-shadow: none; /* Hapus shadow */
+}
 
-					<label>
-						<input 
-							type="radio" 
-							name="category" 
-							id="category2" 
-							value="personal"
-							v-model="input_category" />
-						<span class="bubble personal"></span>
-						<div>Umum</div>
-					</label>      
-				</div>
+nav ul li {
+  display: inline-block;
+  margin-right: 20px;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease; /* Transisi */
+}
 
-				<input type="submit" value="Simpan Kegiatan" />
-			</form>
-		</section>
+nav ul li.active {
+  font-weight: bold;
+}
 
-		<section class="todo-list">
-			<h3>LIST KEGIATAN</h3>
-			<div class="list" id="todo-list">
+nav ul li:hover {
+  transform: translateY(-3px); /* Efek hover */
+}
 
-				<div v-for="todo in todos_asc" :class="`todo-item ${todo.done && 'done'}`">
-					<label>
-						<input type="checkbox" v-model="todo.done" />
-						<span :class="`bubble ${
-							todo.category == 'business' 
-								? 'business' 
-								: 'personal'
-						}`"></span>
-					</label>
+nav ul li::after {
+  content: '';
+  display: block;
+  width: 0;
+  height: 2px;
+  background: #fff;
+  transition: width 0.3s; /* Transisi */
+}
 
-					<div class="todo-content">
-						<input type="text" v-model="todo.content" />
-					</div>
+nav ul li:hover::after {
+  width: 100%; /* Lebar penuh saat hover */
+}
 
-					<div class="actions">
-						<button class="delete" @click="removeTodo(todo)">Delete</button>
-					</div>
-				</div>
+/* Tambahkan icon untuk setiap menu */
+nav ul li::before {
+  content: '\25CF';
+  margin-right: 5px;
+}
 
-			</div>
-		</section>
+/* Tambahkan border pada kolom */
+.column {
+  flex: 1;
+  padding: 20px;
+  box-sizing: border-box;
+  background-color: #f4f4f4;
+  margin: 0 10px;
+  border-radius: 10px;
+  border: 1px solid #ddd; /* Tambahkan border */
+}
 
-	</main>
-</template>
+/* Tambahkan font */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Tambahkan spasi */
+h2, h3 {
+  margin-bottom: 10px;
+}
+
+/* Tambahkan gaya untuk loading */
+.loading {
+  color: #888;
+}
+</style>
