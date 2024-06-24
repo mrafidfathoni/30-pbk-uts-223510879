@@ -1,137 +1,74 @@
 <template>
   <div class="container">
     <header>
-      <nav>
+      <nav class="navbar">
         <ul>
-          <li @click="selectedMenu = 'Post'" :class="{ active: selectedMenu === 'Post' }">Post</li>
-          <li @click="selectedMenu = 'Todos'" :class="{ active: selectedMenu === 'Todos' }">Todos</li>
+          <li :class="{ active: $route.path === '/posts' }">
+            <router-link to="/posts"><i class="fas fa-file-alt"></i> Post</router-link>
+          </li>
+          <li :class="{ active: $route.path === '/todos' }">
+            <router-link to="/todos"><i class="fas fa-list"></i> Todos</router-link>
+          </li>
+          <li :class="{ active: $route.path === '/albums' }">
+            <router-link to="/albums"><i class="fas fa-images"></i> Albums</router-link>
+          </li>
         </ul>
       </nav>
     </header>
-    <div class="content">
-      <div v-if="selectedMenu === 'Post'" class="post-section">
-        <div class="column">
-          <h3>User Details:</h3>
-          <p v-if="selectedUserName"><strong>Name:</strong> {{ selectedUserName }}</p>
-          <p v-if="selectedUserEmail"><strong>Email:</strong> {{ selectedUserEmail }}</p>
-          <p v-if="selectedUserPhone"><strong>Phone:</strong> {{ selectedUserPhone }}</p>
-        </div>
-        <div class="column">
-          <select v-model="selectedUser" @change="fetchPosts">
-            <option v-for="user in users" :key="user.id" :value="user.id">{{ user.name }}</option>
-          </select>
-        </div>
-        <div class="column">
-          <div v-if="loading" class="loading">Loading...</div>
-          <div v-else-if="posts.length > 0">
-            <h2>Postingan User: {{ selectedUserName }}</h2>
-            <ul>
-              <li v-for="post in posts" :key="post.id">
-                <h3>{{ post.title }}</h3>
-                <p>{{ post.body }}</p>
-              </li>
-            </ul>
-          </div>
-          <div v-else>
-            <p>Tidak ada postingan untuk pengguna ini.</p>
-          </div>
-        </div>
-      </div>
-      <div v-else-if="selectedMenu === 'Todos'" class="todos-section">
-        <Todos :todos="todos" />
-      </div>
-    </div>
+    <router-view />
   </div>
 </template>
 
 <script>
-import Todos from './Todos.vue'; // Sesuaikan dengan path file komponen Todos Anda
-
 export default {
-  components: {
-    Todos
-  },
-  data() {
-    return {
-      selectedMenu: 'Post', // Default menu selection
-      users: [],
-      selectedUser: null,
-      selectedUserName: '',
-      selectedUserEmail: '',
-      selectedUserPhone: '',
-      posts: [],
-      todos: [],
-      loading: false
-    };
-  },
-  methods: {
-    fetchUsers() {
-      fetch('https://jsonplaceholder.typicode.com/users')
-        .then(response => response.json())
-        .then(data => {
-          this.users = data;
-        })
-        .catch(error => {
-          console.error('Error fetching users:', error);
-        });
-    },
-    fetchPosts() {
-      if (this.selectedUser) {
-        this.loading = true;
-        fetch(`https://jsonplaceholder.typicode.com/posts?userId=${this.selectedUser}`)
-          .then(response => response.json())
-          .then(data => {
-            this.posts = data;
-            const selectedUser = this.users.find(user => user.id === parseInt(this.selectedUser));
-            if (selectedUser) {
-              this.selectedUserName = selectedUser.name;
-              this.selectedUserEmail = selectedUser.email;
-              this.selectedUserPhone = selectedUser.phone;
-            }
-            this.loading = false;
-          })
-          .catch(error => {
-            console.error('Error fetching posts:', error);
-            this.loading = false;
-          });
-      }
-    }
-  },
-  watch: {
-    selectedUser() {
-      this.fetchPosts();
-    }
-  },
-  created() {
-    this.fetchUsers();
-  }
 };
 </script>
 
-
 <style>
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css');
 
 .container {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   height: 100vh;
-  background: linear-gradient(to right, #4CAF50, #2E8B57); /* Gradient background */
+  background: linear-gradient(to right, #4CAF50, #2E8B57);
+  padding: 10px;
+  box-sizing: border-box;
 }
 
 header {
-  background-color: transparent; /* Hapus background color header */
-  padding: 20px 0;
-  box-shadow: none; /* Hapus shadow */
+  background-color: transparent;
+  width: 100%;
+}
+
+.navbar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(5px);
+}
+
+nav ul {
+  display: flex;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  list-style: none;
 }
 
 nav ul li {
-  display: inline-block;
-  margin-right: 20px;
+  margin: 0 20px;
   color: #fff;
   cursor: pointer;
-  transition: all 0.3s ease; /* Transisi */
+  transition: all 0.3s ease;
+  font-size: 1.1rem;
+  position: relative;
 }
 
 nav ul li.active {
@@ -139,7 +76,7 @@ nav ul li.active {
 }
 
 nav ul li:hover {
-  transform: translateY(-3px); /* Efek hover */
+  transform: translateY(-3px);
 }
 
 nav ul li::after {
@@ -148,42 +85,34 @@ nav ul li::after {
   width: 0;
   height: 2px;
   background: #fff;
-  transition: width 0.3s; /* Transisi */
+  transition: width 0.3s;
+  position: absolute;
+  bottom: -5px;
+  left: 0;
 }
 
 nav ul li:hover::after {
-  width: 100%; /* Lebar penuh saat hover */
+  width: 100%;
 }
 
-/* Tambahkan icon untuk setiap menu */
-nav ul li::before {
-  content: '\25CF';
-  margin-right: 5px;
+.router-link-active {
+  font-weight: bold;
+  color: #ffeb3b;
 }
 
-/* Tambahkan border pada kolom */
-.column {
-  flex: 1;
-  padding: 20px;
-  box-sizing: border-box;
-  background-color: #f4f4f4;
-  margin: 0 10px;
-  border-radius: 10px;
-  border: 1px solid #ddd; /* Tambahkan border */
+i {
+  margin-right: 8px;
+  color: #fff;
 }
 
-/* Tambahkan font */
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
+@media (max-width: 768px) {
+  nav ul {
+    flex-direction: column;
+    align-items: center;
+  }
 
-/* Tambahkan spasi */
-h2, h3 {
-  margin-bottom: 10px;
-}
-
-/* Tambahkan gaya untuk loading */
-.loading {
-  color: #888;
+  nav ul li {
+    margin: 10px 0;
+  }
 }
 </style>
